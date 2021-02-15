@@ -5,11 +5,8 @@ LOCK_TABLE_NAME := terraform-skeleton-state-locks
 
 # Use a known profile to ensure account ID is correct
 ADMIN_ACCOUNT_ID := $(shell \
-	aws --profile tf-admin-account sts get-caller-identity | jq -r .Account \
+	aws --profile bti360 sts get-caller-identity | jq -r .Account \
 )
-
-BACKEND_ROLE_PATH := terraform/TerraformBackend
-BACKEND_ROLE_ARN := arn:aws:iam::${ADMIN_ACCOUNT_ID}:role/${BACKEND_ROLE_PATH}
 
 DEPLOYMENT_DIRS := $(shell find deployments -name terragrunt.hcl \
 	-not -path */.terragrunt-cache/* -exec dirname {} \; \
@@ -128,12 +125,6 @@ cfn-import-terragrunt: import-terragrunt-changeset.json
 	aws cloudformation wait stack-import-complete \
 		--stack-name ${ADMIN_INIT_STACK_NAME}
 	$(call show_cfn_drift,${ADMIN_INIT_STACK_NAME})
-
-.PHONY: test-backend-assume
-test-backend-assume:
-	aws sts assume-role \
-		--role-arn ${BACKEND_ROLE_ARN} \
-		--role-session-name $(shell whoami)
 
 .PHONY: init-all
 init-all:
